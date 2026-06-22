@@ -1,25 +1,21 @@
+import os
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from dotenv import load_dotenv
+from pydantic import BaseModel
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
-class Settings(BaseSettings):
+class Settings(BaseModel):
     openrouter_api_key: str = ""
     tavily_api_key: str = ""
     openrouter_model: str = "openai/gpt-4o-mini"
     database_url: str = "sqlite:///./research_history.db"
     app_env: str = "development"
     log_level: str = "INFO"
-
-    model_config = SettingsConfigDict(
-        env_file=PROJECT_ROOT / ".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-    )
 
     @property
     def openrouter_base_url(self) -> str:
@@ -36,4 +32,12 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    load_dotenv(PROJECT_ROOT / ".env")
+    return Settings(
+        openrouter_api_key=os.getenv("OPENROUTER_API_KEY", ""),
+        tavily_api_key=os.getenv("TAVILY_API_KEY", ""),
+        openrouter_model=os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini"),
+        database_url=os.getenv("DATABASE_URL", "sqlite:///./research_history.db"),
+        app_env=os.getenv("APP_ENV", "development"),
+        log_level=os.getenv("LOG_LEVEL", "INFO"),
+    )
